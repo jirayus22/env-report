@@ -312,8 +312,11 @@ export default function WaterReportFrom() {
   };
 
   useEffect(() => {
+    console.log("Fetching operations... : " + process.env.NEXT_PUBLIC_API_URL);
     const getData = async () => {
-      const res = await fetch("http://localhost:8080/api/v1/operations");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations`,
+      );
       const json = await res.json();
       console.log("Fetched operations:", json.data);
       setOperations(json.data);
