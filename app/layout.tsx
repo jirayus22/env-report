@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../app/globals.css";
 import Providers from "./providers";
 import Navbar from "@/components/layout/Navbar";
+import { Card } from "primereact/card";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,11 +29,10 @@ export default function RootLayout({
     <html lang="th" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-screen flex flex-col">
         <Providers>
-          {/* ✅ Navbar ด้านบน */}
           <Navbar />
-
-          {/* ✅ เนื้อหาหลัก */}
-          <main className="flex-1 p-6 bg-gray-50">{children}</main>
+          <main className="flex-1 p-6 bg-gray-50">
+            <Card>{children}</Card>
+          </main>
         </Providers>
       </body>
     </html>

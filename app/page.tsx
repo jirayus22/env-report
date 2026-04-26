@@ -35,7 +35,11 @@ export default function Home() {
     <div className="p-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* ✅ Card 1 (ใส่ Chart) */}
-        <Card title="รายงานระบบน้ำเสียรายวัน" subTitle="Statistics">
+        <Card
+          title="รายงานระบบน้ำเสียรายวัน"
+          subTitle="Statistics"
+          style={{ backgroundColor: "#eaeaea", border: "none" }}
+        >
           <Chart
             type="pie"
             data={chartData}
@@ -45,12 +49,20 @@ export default function Home() {
         </Card>
 
         {/* Card 2 */}
-        <Card title="Card 2" subTitle="Details">
+        <Card
+          title="Card 2"
+          subTitle="Details"
+          style={{ backgroundColor: "#eaeaea", border: "none" }}
+        >
           <p className="m-0">Repellat libero asperiores earum nam nobis...</p>
         </Card>
 
         {/* Card 3 */}
-        <Card title="Card 3" subTitle="Summary">
+        <Card
+          title="Card 3"
+          subTitle="Summary"
+          style={{ backgroundColor: "#eaeaea", border: "none" }}
+        >
           <p className="m-0">
             Consequuntur error repudiandae numquam deserunt...
           </p>
@@ -59,7 +71,11 @@ export default function Home() {
 
       {/* Bottom Card */}
       <div className="pt-10">
-        <Card title="Extra Card" subTitle="Summary">
+        <Card
+          title="Extra Card"
+          subTitle="Summary"
+          style={{ backgroundColor: "#eaeaea", border: "none" }}
+        >
           <p className="m-0">This is another card below the grid.</p>
         </Card>
       </div>

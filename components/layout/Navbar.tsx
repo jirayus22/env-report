@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { Menubar } from "primereact/menubar";
-import { InputText } from "primereact/inputtext";
 import { MenuItem } from "primereact/menuitem";
 import { Badge } from "primereact/badge";
 import { Avatar } from "primereact/avatar";
@@ -26,6 +25,13 @@ export default function Navbar() {
       label: "รายงานระบบน้ำเสีย",
       icon: "pi pi-home",
       url: "/water-report",
+      //template: itemRenderer,
+    },
+    {
+      label: "คู่มือการใช้งาน",
+      icon: "pi pi-book",
+      url: "/user-manual",
+      //template: itemRenderer,
     },
   ];
 
@@ -50,7 +56,12 @@ export default function Navbar() {
 
   return (
     <div className="card">
-      <Menubar model={items} start={start} end={end} />
+      <Menubar
+        model={items}
+        start={start}
+        end={end}
+        style={{ backgroundColor: "#55d685", border: "none" }}
+      />
     </div>
   );
 }

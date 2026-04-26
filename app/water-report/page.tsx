@@ -1,420 +1,457 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
-
-import { Card } from "primereact/card";
-import React, { useRef, useState } from "react";
-import { Toast } from "primereact/toast";
-import {
-  FileUpload,
-  FileUploadHeaderTemplateOptions,
-  FileUploadSelectEvent,
-  FileUploadFile,
-  FileUploadUploadEvent,
-  ItemTemplateOptions,
-} from "primereact/fileupload";
-import { ProgressBar } from "primereact/progressbar";
-import { Button } from "primereact/button";
-import { Tooltip } from "primereact/tooltip";
-import { Tag } from "primereact/tag";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Calendar } from "primereact/calendar";
-import { Nullable } from "primereact/ts-helpers";
-import { RadioButton, RadioButtonChangeEvent } from "primereact/radiobutton";
+import React, { useState, useEffect } from "react";
+import { FilterMatchMode, FilterOperator } from "primereact/api";
+import { DataTable, DataTableFilterMeta } from "primereact/datatable";
+import { Column, ColumnFilterElementTemplateOptions } from "primereact/column";
 import { InputText } from "primereact/inputtext";
+import { IconField } from "primereact/iconfield";
+import { InputIcon } from "primereact/inputicon";
+import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
+import { InputNumber } from "primereact/inputnumber";
+import { Button } from "primereact/button";
+import { ProgressBar } from "primereact/progressbar";
+import { Calendar } from "primereact/calendar";
+import { MultiSelect, MultiSelectChangeEvent } from "primereact/multiselect";
+import { Slider, SliderChangeEvent } from "primereact/slider";
+import { Tag } from "primereact/tag";
+import { CustomerService } from "../service/CustomerService";
+import { Customer } from "../types/Customer";
+import { Representative } from "../types/Representative";
+import { DataTableFilterMetaData } from "primereact/datatable";
+import { Operation } from "../types/Operation";
 import { useRouter } from "next/navigation";
 
-type ICallback = (event: React.SyntheticEvent<Element, Event>) => void;
+export default function WaterReportFrom() {
+  const [operations, setOperations] = useState<Operation[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedOperations, setSelectedOperations] = useState<Operation[]>([]);
+  const [filters, setFilters] = useState<DataTableFilterMeta>({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    name: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
+    },
+    "country.name": {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }],
+    },
+    representative: { value: null, matchMode: FilterMatchMode.IN },
+    date: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
+    },
+    balance: {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    status: {
+      operator: FilterOperator.OR,
+      constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+    },
+    activity: { value: null, matchMode: FilterMatchMode.BETWEEN },
+  });
+  const [globalFilterValue, setGlobalFilterValue] = useState<string>("");
+  const [representatives] = useState<Representative[]>([
+    { name: "Amy Elsner", image: "amyelsner.png" },
+    { name: "Anna Fali", image: "annafali.png" },
+    { name: "Asiya Javayant", image: "asiyajavayant.png" },
+    { name: "Bernardo Dominic", image: "bernardodominic.png" },
+    { name: "Elwin Sharvill", image: "elwinsharvill.png" },
+    { name: "Ioni Bowcher", image: "ionibowcher.png" },
+    { name: "Ivan Magalhaes", image: "ivanmagalhaes.png" },
+    { name: "Onyama Limba", image: "onyamalimba.png" },
+    { name: "Stephen Shaw", image: "stephenshaw.png" },
+    { name: "XuXue Feng", image: "xuxuefeng.png" },
+  ]);
 
-export default function WaterReport() {
   const router = useRouter();
-  const toast = useRef<Toast>(null);
-  const [totalSize, setTotalSize] = useState(0);
-  const fileUploadRef = useRef<FileUpload>(null);
-  const [date, setDate] = useState<Nullable<Date>>(null);
-  const [ingredient, setIngredient] = useState<string>("");
 
-  const onTemplateSelect = (e: FileUploadSelectEvent) => {
-    let _totalSize = totalSize;
-    const files = e.files;
+  const [statuses] = useState<string[]>([
+    "unqualified",
+    "qualified",
+    "new",
+    "negotiation",
+    "renewal",
+  ]);
 
-    Object.keys(files).forEach((key: string) => {
-      _totalSize += files[Number(key)].size || 0;
+  const getSeverity = (status: string) => {
+    switch (status) {
+      case "unqualified":
+        return "danger";
+
+      case "qualified":
+        return "success";
+
+      case "new":
+        return "info";
+
+      case "negotiation":
+        return "warning";
+
+      case "renewal":
+        return null;
+    }
+  };
+
+  const getCustomers = (data: Customer[]) => {
+    return [...(data || [])].map((d) => ({
+      ...d,
+      date: new Date(d.date),
+    }));
+  };
+
+  useEffect(() => {
+    CustomerService.getCustomersLarge().then((data: Customer[]) =>
+      setCustomers(getCustomers(data)),
+    );
+  }, []);
+
+  const formatDate = (value: string | Date) => {
+    return new Date(value).toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
-
-    setTotalSize(_totalSize);
   };
 
-  const onTemplateUpload = (e: FileUploadUploadEvent) => {
-    let _totalSize = 0;
-
-    e.files.forEach((file) => {
-      _totalSize += file.size || 0;
-    });
-
-    setTotalSize(_totalSize);
-    toast.current?.show({
-      severity: "info",
-      summary: "Success",
-      detail: "File Uploaded",
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
     });
   };
 
-  const onTemplateRemove = async (
-    file: FileUploadFile,
-    callback: ICallback,
-    event: React.SyntheticEvent<Element, Event>,
-  ) => {
-    setTotalSize(totalSize - file.size);
-    callback(event);
+  const onGlobalFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const _filters = { ...filters };
+
+    (_filters["global"] as DataTableFilterMetaData).value = value;
+
+    setFilters(_filters);
+    setGlobalFilterValue(value);
   };
 
-  const onTemplateClear = () => {
-    setTotalSize(0);
+  const renderHeader = () => {
+    return (
+      <div className="flex flex-wrap gap-2 justify-content-between align-items-center">
+        <h4 className="m-0">Customers</h4>
+        <IconField iconPosition="left">
+          <InputIcon className="pi pi-search" />
+          <InputText
+            value={globalFilterValue}
+            onChange={onGlobalFilterChange}
+            placeholder="Keyword Search"
+          />
+        </IconField>
+      </div>
+    );
   };
 
-  const headerTemplate = (options: FileUploadHeaderTemplateOptions) => {
-    const { className, chooseButton, uploadButton, cancelButton } = options;
-    const value = totalSize / 10000;
-    const formatedValue =
-      fileUploadRef && fileUploadRef.current
-        ? fileUploadRef.current.formatSize(totalSize)
-        : "0 B";
+  const countryBodyTemplate = (rowData: Customer) => {
+    return (
+      <div className="flex align-items-center gap-2">
+        <img
+          alt="flag"
+          src="https://primefaces.org/cdn/primereact/images/flag/flag_placeholder.png"
+          className={`flag flag-${rowData.country.code}`}
+          style={{ width: "24px" }}
+        />
+        <span>{rowData.country.name}</span>
+      </div>
+    );
+  };
+
+  const representativeBodyTemplate = (rowData: Customer) => {
+    const representative = rowData.representative;
 
     return (
+      <div className="flex align-items-center gap-2">
+        <img
+          alt={representative.name}
+          src={`https://primefaces.org/cdn/primereact/images/avatar/${representative.image}`}
+          width="32"
+        />
+        <span>{representative.name}</span>
+      </div>
+    );
+  };
+
+  const representativeFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <React.Fragment>
+        <div className="mb-3 font-bold">Agent Picker</div>
+        <MultiSelect
+          value={options.value}
+          options={representatives}
+          itemTemplate={representativesItemTemplate}
+          onChange={(e: MultiSelectChangeEvent) =>
+            options.filterCallback(e.value)
+          }
+          optionLabel="name"
+          placeholder="Any"
+          className="p-column-filter"
+        />
+      </React.Fragment>
+    );
+  };
+
+  const representativesItemTemplate = (option: Representative) => {
+    return (
+      <div className="flex align-items-center gap-2">
+        <img
+          alt={option.name}
+          src={`https://primefaces.org/cdn/primereact/images/avatar/${option.image}`}
+          width="32"
+        />
+        <span>{option.name}</span>
+      </div>
+    );
+  };
+
+  const dateBodyTemplate = (rowData: Customer) => {
+    return formatDate(rowData.date);
+  };
+
+  const dateFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+    return (
+      <Calendar
+        value={options.value}
+        onChange={(e) => options.filterCallback(e.value, options.index)}
+        dateFormat="mm/dd/yy"
+        placeholder="mm/dd/yyyy"
+        mask="99/99/9999"
+      />
+    );
+  };
+
+  const balanceBodyTemplate = (rowData: Customer) => {
+    return formatCurrency(rowData.balance);
+  };
+
+  const balanceFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <InputNumber
+        value={options.value}
+        onChange={(e) => options.filterCallback(e.value, options.index)}
+        mode="currency"
+        currency="USD"
+        locale="en-US"
+      />
+    );
+  };
+
+  const statusBodyTemplate = (rowData: Customer) => {
+    return (
+      <Tag value={rowData.status} severity={getSeverity(rowData.status)} />
+    );
+  };
+
+  const statusFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <Dropdown
+        value={options.value}
+        options={statuses}
+        onChange={(e: DropdownChangeEvent) =>
+          options.filterCallback(e.value, options.index)
+        }
+        itemTemplate={statusItemTemplate}
+        placeholder="Select One"
+        className="p-column-filter"
+        showClear
+      />
+    );
+  };
+
+  const statusItemTemplate = (option: string) => {
+    return <Tag value={option} severity={getSeverity(option)} />;
+  };
+
+  const activityBodyTemplate = (rowData: Customer) => {
+    return (
+      <ProgressBar
+        value={rowData.activity}
+        showValue={false}
+        style={{ height: "6px" }}
+      ></ProgressBar>
+    );
+  };
+
+  const activityFilterTemplate = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <>
+        <Slider
+          value={options.value}
+          onChange={(e: SliderChangeEvent) => options.filterCallback(e.value)}
+          range
+          className="m-3"
+        ></Slider>
+        <div className="flex align-items-center justify-content-between px-2">
+          <span>{options.value ? options.value[0] : 0}</span>
+          <span>{options.value ? options.value[1] : 100}</span>
+        </div>
+      </>
+    );
+  };
+
+  const actionBodyTemplate = () => {
+    return <Button type="button" icon="pi pi-cog" rounded></Button>;
+  };
+
+  const header = renderHeader();
+
+  const statusTemplate = (value: boolean) => {
+    return value ? "ปกติ" : "ผิดปกติ";
+  };
+
+  useEffect(() => {
+    const getData = async () => {
+      const res = await fetch("http://localhost:8080/api/v1/operations");
+      const json = await res.json();
+      console.log("Fetched operations:", json.data);
+      setOperations(json.data);
+    };
+
+    getData();
+  }, []);
+
+  useEffect(() => {
+    console.log("Operations:", operations);
+  }, [operations]);
+
+  const formatThaiDate = (date: string | Date) => {
+    return new Date(date).toLocaleDateString("th-TH", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <div className="card">
       <div
-        className={className}
         style={{
-          backgroundColor: "transparent",
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
         }}
       >
-        {chooseButton}
-        {uploadButton}
-        {cancelButton}
-        <div className="flex align-items-center gap-3 ml-auto">
-          <span>{formatedValue} / 1 MB</span>
-          <ProgressBar
-            value={value}
-            showValue={false}
-            style={{ width: "10rem", height: "12px" }}
-          ></ProgressBar>
-        </div>
-      </div>
-    );
-  };
+        <h1 style={{ margin: 0 }}>รายการระบบน้ำเสียรายวัน</h1>
 
-  const itemTemplate = (file: object, props: ItemTemplateOptions) => {
-    return (
-      <div className="flex align-items-center flex-wrap">
-        <div className="flex align-items-center" style={{ width: "40%" }}>
-          <img
-            alt={(file as FileUploadFile).name}
-            role="presentation"
-            src={(file as FileUploadFile).objectURL}
-            width={100}
-          />
-          <span className="flex flex-column text-left ml-3">
-            {(file as FileUploadFile).name}
-            <small>{new Date().toLocaleDateString()}</small>
-          </span>
-        </div>
-        <Tag
-          value={props.formatSize}
-          severity="warning"
-          className="px-3 py-2"
-        />
         <Button
-          type="button"
-          icon="pi pi-times"
-          className="p-button-outlined p-button-rounded p-button-danger ml-auto"
-          onClick={(event: React.SyntheticEvent<Element, Event>) =>
-            onTemplateRemove(file as FileUploadFile, props.onRemove, event)
-          }
+          label="เพิ่มรายการ"
+          icon="pi pi-plus"
+          severity="success"
+          onClick={() => router.push("/water-report-from")}
         />
       </div>
-    );
-  };
 
-  const emptyTemplate = () => {
-    return (
-      <div className="flex align-items-center flex-column">
-        <i
-          className="pi pi-image mt-3 p-5"
+      <div className="pt-5">
+        <DataTable
+          className="text-center text-center-table bordered-table"
+          value={operations}
+          paginator
+          rows={10}
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+          rowsPerPageOptions={[10, 25, 50]}
+          dataKey="_id"
+          selectionMode="checkbox"
+          selection={selectedOperations}
           style={{
-            fontSize: "5em",
-            borderRadius: "50%",
-            backgroundColor: "var(--surface-b)",
-            color: "var(--surface-d)",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            overflow: "hidden",
+            background: "white",
           }}
-        ></i>
-        <span
-          style={{ fontSize: "1.2em", color: "var(--text-color-secondary)" }}
-          className="my-5"
+          emptyMessage="ไม่พบข้อมูล."
+          currentPageReportTemplate="กำลังแสดง {first} ถึง {last} จากทั้งหมด {totalRecords} รายการ"
         >
-          Drag and Drop Image Here
-        </span>
+          <Column
+            field="system_status"
+            header="การทำงานของระบบ"
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "3rem" }}
+            body={(row) => statusTemplate(row.system_status)}
+          />
+          <Column
+            field="pump_status"
+            header="เครื่องสูบน้ำเสีย"
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "5rem" }}
+            body={(row) => statusTemplate(row.pump_status)}
+          />
+          <Column
+            field="aerator_status"
+            header="เครื่องเติมอากาศ"
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "8rem" }}
+            body={(row) => statusTemplate(row.aerator_status)}
+          />
+          <Column
+            field="sludge_pump_status"
+            header="เครื่องสูบตะกอน"
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "8rem" }}
+            body={(row) => statusTemplate(row.sludge_pump_status)}
+          />
+          <Column
+            field="chlorine_status"
+            header="เครื่องหยดคลอรีน"
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "8rem" }}
+            body={(row) => statusTemplate(row.chlorine_status)}
+          />
+          <Column
+            field="do_value"
+            header="DO"
+            sortable
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "3rem" }}
+          />
+          <Column
+            field="sv30_value"
+            header="SV30"
+            sortable
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "5rem" }}
+          />
+          <Column
+            field="ph_value"
+            header="pH"
+            sortable
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "5rem" }}
+          />
+          <Column
+            field="work_date"
+            header="วันที่บันทึก"
+            sortable
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "8rem" }}
+            body={(row) => formatThaiDate(row.work_date)}
+          />
+          <Column
+            header="Action"
+            style={{ width: "100px" }}
+            body={(rowData: Operation) => (
+              <Button
+                icon="pi pi-search"
+                rounded
+                text
+                style={{ fontSize: "5rem" }} // 🔥 ขยายไอคอน
+                onClick={() => router.push(`/water-report-from/${rowData._id}`)}
+              />
+            )}
+          />
+        </DataTable>
       </div>
-    );
-  };
-
-  const chooseOptions = {
-    icon: "pi pi-fw pi-images",
-    iconOnly: true,
-    className: "custom-choose-btn p-button-rounded p-button-outlined",
-  };
-  const uploadOptions = {
-    icon: "pi pi-fw pi-cloud-upload",
-    iconOnly: true,
-    className:
-      "custom-upload-btn p-button-success p-button-rounded p-button-outlined",
-  };
-  const cancelOptions = {
-    icon: "pi pi-fw pi-times",
-    iconOnly: true,
-    className:
-      "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined",
-  };
-  return (
-    <div className="p-4">
-      <Card
-        subTitle="บันทึกระบบน้ำเสีย"
-        pt={{
-          subTitle: {
-            style: { fontSize: "1.5rem", fontWeight: "bold" },
-          },
-        }}
-      >
-        <div>
-          <Toast ref={toast}></Toast>
-
-          <Tooltip
-            target=".custom-choose-btn"
-            content="Choose"
-            position="bottom"
-          />
-          <Tooltip
-            target=".custom-upload-btn"
-            content="Upload"
-            position="bottom"
-          />
-          <Tooltip
-            target=".custom-cancel-btn"
-            content="Clear"
-            position="bottom"
-          />
-
-          <FileUpload
-            ref={fileUploadRef}
-            name="demo[]"
-            url="/api/upload"
-            multiple
-            accept="image/*"
-            maxFileSize={1000000}
-            onUpload={onTemplateUpload}
-            onSelect={onTemplateSelect}
-            onError={onTemplateClear}
-            onClear={onTemplateClear}
-            headerTemplate={headerTemplate}
-            itemTemplate={itemTemplate}
-            emptyTemplate={emptyTemplate}
-            chooseOptions={chooseOptions}
-            uploadOptions={uploadOptions}
-            cancelOptions={cancelOptions}
-          />
-        </div>
-
-        <div className="pt-5 w-full">
-          <div className="flex-auto">
-            <label htmlFor="buttondisplay" className="font-bold block mb-2">
-              วันที่บันทึก
-            </label>
-            <Calendar
-              id="buttondisplay"
-              value={date}
-              onChange={(e) => setDate(e.value)}
-              showIcon
-            />
-          </div>
-        </div>
-
-        <div className="flex-column"></div>
-
-        <div className="flex flex-wrap gap-3 pt-3">
-          <div className="flex flex-column align-items-center">
-            <label>การทำงานของระบบ</label>
-          </div>
-        </div>
-        <RadioButton
-          inputId="ingredient1"
-          name="pizza"
-          value="Cheese"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Cheese"}
-        />
-        <label htmlFor="ingredient1" className="ml-2">
-          ปกติ
-        </label>
-        <RadioButton
-          className="ml-2"
-          inputId="ingredient2"
-          name="pizza"
-          value="Mushroom"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Mushroom"}
-        />
-        <label htmlFor="ingredient2" className="ml-2">
-          ผิดปกติ
-        </label>
-
-        <div className="flex flex-wrap gap-3 pt-3">
-          <div className="flex flex-column align-items-center">
-            <label>เครื่องสูบน้ำเสีย</label>
-          </div>
-        </div>
-        <RadioButton
-          inputId="ingredient1"
-          name="pizza"
-          value="Cheese"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Cheese"}
-        />
-        <label htmlFor="ingredient1" className="ml-2">
-          ปกติ
-        </label>
-        <RadioButton
-          className="ml-2"
-          inputId="ingredient2"
-          name="pizza"
-          value="Mushroom"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Mushroom"}
-        />
-        <label htmlFor="ingredient2" className="ml-2">
-          ผิดปกติ
-        </label>
-
-        <div className="flex flex-wrap gap-3 pt-3">
-          <div className="flex flex-column align-items-center">
-            <label>เครื่องเติมอากาศ</label>
-          </div>
-        </div>
-        <RadioButton
-          inputId="ingredient1"
-          name="pizza"
-          value="Cheese"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Cheese"}
-        />
-        <label htmlFor="ingredient1" className="ml-2">
-          ปกติ
-        </label>
-        <RadioButton
-          className="ml-2"
-          inputId="ingredient2"
-          name="pizza"
-          value="Mushroom"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Mushroom"}
-        />
-        <label htmlFor="ingredient2" className="ml-2">
-          ผิดปกติ
-        </label>
-
-        <div className="flex flex-wrap gap-3 pt-3">
-          <div className="flex flex-column align-items-center">
-            <label>เครื่องสูบตะกอน</label>
-          </div>
-        </div>
-        <RadioButton
-          inputId="ingredient1"
-          name="pizza"
-          value="Cheese"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Cheese"}
-        />
-        <label htmlFor="ingredient1" className="ml-2">
-          ปกติ
-        </label>
-        <RadioButton
-          className="ml-2"
-          inputId="ingredient2"
-          name="pizza"
-          value="Mushroom"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Mushroom"}
-        />
-        <label htmlFor="ingredient2" className="ml-2">
-          ผิดปกติ
-        </label>
-
-        <div className="flex flex-wrap gap-3 pt-3">
-          <div className="flex flex-column align-items-center">
-            <label>เครื่องหยดคลอรีน</label>
-          </div>
-        </div>
-        <RadioButton
-          inputId="ingredient1"
-          name="pizza"
-          value="Cheese"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Cheese"}
-        />
-        <label htmlFor="ingredient1" className="ml-2">
-          ปกติ
-        </label>
-        <RadioButton
-          className="ml-2"
-          inputId="ingredient2"
-          name="pizza"
-          value="Mushroom"
-          onChange={(e) => setIngredient(e.value)}
-          checked={ingredient === "Mushroom"}
-        />
-        <label htmlFor="ingredient2" className="ml-2">
-          ผิดปกติ
-        </label>
-
-        <div className="flex flex-column align-items-center pt-5">
-          <label className="font-bold block mb-2">การตรวจวัดคุณภาพน้ำ</label>
-        </div>
-
-        <div className="card flex flex-column md:flex-row gap-3 pt-3">
-          <div className="p-inputgroup flex-1">
-            <span className="p-inputgroup-addon">DO</span>
-            <InputText placeholder="DO" />
-          </div>
-
-          <div className="p-inputgroup flex-1">
-            <span className="p-inputgroup-addon">SV30</span>
-            <InputText placeholder="SV30" />
-          </div>
-
-          <div className="p-inputgroup flex-1">
-            <span className="p-inputgroup-addon">PH</span>
-            <InputText placeholder="PH" />
-          </div>
-        </div>
-
-        <div className="pt-3">
-          <label className="font-bold block mb-2">หมายเหตุ</label>
-          <InputTextarea
-            rows={5}
-            className="w-full"
-            autoResize
-            placeholder="กรอกหมายเหตุเพิ่มเติม..."
-          />
-        </div>
-
-        <div className="card flex flex-wrap justify-center gap-3 pt-5">
-          <Button
-            onClick={() => router.push("/")}
-            label="ย้อนกลับ"
-            severity="danger"
-          />
-          <Button label="บันทึก" icon="pi pi-check" severity="success" />
-        </div>
-      </Card>
     </div>
   );
 }
