@@ -31,21 +31,27 @@ import {
 
 type ICallback = (event: React.SyntheticEvent<Element, Event>) => void;
 
-interface UserInspector {
-  name: string;
-  code: string;
-}
-export default function Page() {
-  const [operation, setOperation] = useState<Operation | null>(null);
+type UserInspector = {
+  _id: string;
+  pre_name: number;
+  first_name: string;
+  last_name: string;
+};
 
+export default function Page() {
   const router = useRouter();
   const toast = useRef<Toast>(null);
   const [totalSize, setTotalSize] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
   const [date, setDate] = useState<Nullable<Date>>(null);
+
   const [userInspector, setUserInspector] = useState<UserInspector | null>(
     null,
   );
+  const [userInspectorList, setUserInspectorList] = useState<
+    UserInspector[] | null
+  >(null);
+
   const [remark, setRemark] = useState<string | null>("");
 
   const fieldRadios = [
@@ -64,6 +70,19 @@ export default function Page() {
     chlorine_status: null,
   });
 
+  const convertPreName = (pre_name: number) => {
+    switch (pre_name) {
+      case 1:
+        return "นาย";
+      case 2:
+        return "นางสาว";
+      case 3:
+        return "นาง";
+      default:
+        return "";
+    }
+  };
+
   const [metrics, setMetrics] = useState({
     do_value: "",
     sv30_value: "",
@@ -71,36 +90,24 @@ export default function Page() {
   });
 
   useEffect(() => {
-    console.log("Operations:", operation);
-  }, [operation]);
+    const getUser = async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/user`);
+      const json = await res.json();
 
-  const userInspectorList: UserInspector[] = [
-    { name: "นางสาวอรญา แก้วตา", code: "1" },
-    { name: "นายจิรายุส ไทยอุทัย", code: "2" },
-  ];
+      const uesrsResponse = json.data;
+      console.log("Users Response:", uesrsResponse);
+      setUserInspectorList(uesrsResponse as UserInspector[]);
+    };
 
-  const selectedUserInspectorTemplate = (
-    option: UserInspector,
-    props: DropdownProps,
-  ) => {
-    if (option) {
-      return (
-        <div className="flex align-items-center">
-          <div>{option.name}</div>
-        </div>
-      );
-    }
+    getUser();
+  }, []);
 
-    return <span>{props.placeholder}</span>;
-  };
+  useEffect(() => {
+    console.log("User Inspector List:", userInspectorList);
+  }, [userInspectorList]);
 
-  const UserInspectorOptionTemplate = (option: UserInspector) => {
-    return (
-      <div className="flex align-items-center">
-        <div>{option.name}</div>
-      </div>
-    );
-  };
+  const getFullName = (u: UserInspector) =>
+    convertPreName(u.pre_name) + `${u.first_name} ${u.last_name}`;
 
   const onTemplateSelect = (e: FileUploadSelectEvent) => {
     let _totalSize = totalSize;
@@ -246,15 +253,16 @@ export default function Page() {
   };
 
   const handleSubmit = async () => {
+    console.log("UserInspector : " + JSON.stringify(userInspector));
     const payload = {
       ...form,
       project_id: "69e8f9d2335b5983d11f74f5",
-      created_by: "69edc8f0f4be91db77f348ca",
+      created_by: userInspector?._id ?? null,
       do_value: Number(metrics.do_value),
       sv30_value: Number(metrics.sv30_value),
       ph_value: Number(metrics.ph_value),
       work_date: date ? date.toISOString() : null,
-      remark,
+      remark: remark,
     };
 
     console.log("Payload to submit:", payload);
@@ -263,7 +271,11 @@ export default function Page() {
       title: "แจ้งเตือน!",
       text: "ต้องการบันทึกข้อมูลใช่หรือไม่?",
       icon: "warning",
+      showCancelButton: true,
       confirmButtonText: "ตกลง",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#d33",
     }).then(async (result) => {
       if (result.isConfirmed) {
         const res = await fetch(
@@ -293,204 +305,204 @@ export default function Page() {
   };
 
   return (
-    <div className="p-4">
-      <Card
-        subTitle="บันทึกระบบน้ำเสีย"
-        pt={{
-          subTitle: {
-            style: { fontSize: "1.5rem", fontWeight: "bold" },
-          },
-        }}
-      >
-        <div>
-          <Toast ref={toast}></Toast>
+    <div>
+      <h1 className="text-4xl font-bold">บันทึกระบบน้ำเสีย</h1>
 
-          <Tooltip
-            target=".custom-choose-btn"
-            content="Choose"
-            position="bottom"
-          />
-          <Tooltip
-            target=".custom-upload-btn"
-            content="Upload"
-            position="bottom"
-          />
-          <Tooltip
-            target=".custom-cancel-btn"
-            content="Clear"
-            position="bottom"
-          />
+      <div className="pt-5">
+        <Toast ref={toast}></Toast>
 
-          <FileUpload
-            ref={fileUploadRef}
-            name="demo[]"
-            url="/api/upload"
-            multiple
-            accept="image/*"
-            maxFileSize={1000000}
-            onUpload={onTemplateUpload}
-            onSelect={onTemplateSelect}
-            onError={onTemplateClear}
-            onClear={onTemplateClear}
-            headerTemplate={headerTemplate}
-            itemTemplate={itemTemplate}
-            emptyTemplate={emptyTemplate}
-            chooseOptions={chooseOptions}
-            uploadOptions={uploadOptions}
-            cancelOptions={cancelOptions}
-          />
-        </div>
+        <Tooltip
+          target=".custom-choose-btn"
+          content="Choose"
+          position="bottom"
+        />
+        <Tooltip
+          target=".custom-upload-btn"
+          content="Upload"
+          position="bottom"
+        />
+        <Tooltip
+          target=".custom-cancel-btn"
+          content="Clear"
+          position="bottom"
+        />
 
-        <div className="pt-5 w-full">
-          <div className="flex-auto">
-            <label htmlFor="buttondisplay" className="font-bold block mb-2">
-              วันที่บันทึก
-            </label>
-            <Calendar
-              id="buttondisplay"
-              value={date}
-              onChange={(e) => setDate(e.value)}
-              showIcon
-            />
-          </div>
-        </div>
+        <FileUpload
+          ref={fileUploadRef}
+          name="demo[]"
+          url="/api/upload"
+          multiple
+          accept="image/*"
+          maxFileSize={1000000}
+          onUpload={onTemplateUpload}
+          onSelect={onTemplateSelect}
+          onError={onTemplateClear}
+          onClear={onTemplateClear}
+          headerTemplate={headerTemplate}
+          itemTemplate={itemTemplate}
+          emptyTemplate={emptyTemplate}
+          chooseOptions={chooseOptions}
+          uploadOptions={uploadOptions}
+          cancelOptions={cancelOptions}
+        />
+      </div>
 
-        {fieldRadios.map((field) => (
-          <div key={field.key} className="col-12 md:col-6 lg:col-4">
-            <div className="p-3 ">
-              <label className="font-bold block mb-2">{field.label}</label>
-
-              <div className="flex align-items-center gap-3">
-                <RadioButton
-                  inputId={`${field.key}_true`}
-                  name={field.key}
-                  value={true}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [field.key]: e.value,
-                    }))
-                  }
-                  checked={form[field.key] === true}
-                />
-                <label htmlFor={`${field.key}_true`}>ปกติ</label>
-
-                <RadioButton
-                  inputId={`${field.key}_false`}
-                  name={field.key}
-                  value={false}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [field.key]: e.value,
-                    }))
-                  }
-                  checked={form[field.key] === false}
-                />
-                <label htmlFor={`${field.key}_false`}>ผิดปกติ</label>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <div className="flex flex-column align-items-center pt-5">
-          <label className="font-bold block mb-2">การตรวจวัดคุณภาพน้ำ</label>
-        </div>
-
-        <div className="grid pt-3 gap-3">
-          <div className="col-1 md:col-1">
-            <label className="font-bold block mb-2">DO</label>
-            <InputText
-              className="w-full"
-              placeholder="DO"
-              value={metrics.do_value}
-              onChange={(e) =>
-                setMetrics((prev) => ({
-                  ...prev,
-                  do_value: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="col-2 md:col-2">
-            <label className="font-bold block mb-2">SV30</label>
-            <InputText
-              className="w-full"
-              placeholder="SV30"
-              value={metrics.sv30_value}
-              onChange={(e) =>
-                setMetrics((prev) => ({
-                  ...prev,
-                  sv30_value: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="col-3 md:col-3">
-            <label className="font-bold block mb-2">PH</label>
-            <InputText
-              className="w-full"
-              placeholder="PH"
-              value={metrics.ph_value}
-              onChange={(e) =>
-                setMetrics((prev) => ({
-                  ...prev,
-                  ph_value: e.target.value,
-                }))
-              }
-            />
-          </div>
-        </div>
-
-        <div className="pt-3">
-          <label className="font-bold block mb-2">หมายเหตุ</label>
-          <InputTextarea
-            rows={5}
-            className="w-full"
-            autoResize
-            placeholder="กรอกหมายเหตุเพิ่มเติม..."
-            value={remark ?? ""}
-            onChange={(e) => setRemark(e.target.value)}
+      <div className="pt-5 w-full">
+        <div className="flex-auto">
+          <label htmlFor="buttondisplay" className="font-bold block mb-2">
+            วันที่บันทึก
+          </label>
+          <Calendar
+            id="buttondisplay"
+            value={date}
+            onChange={(e) => setDate(e.value)}
+            showIcon
           />
         </div>
+      </div>
 
-        <div className="pt-5 w-full">
-          <div className="flex-auto">
-            <label>ผู้รายงานผล</label>
-            <div className="flex-1 pt-1">
-              <Dropdown
-                value={userInspector}
-                onChange={(e: DropdownChangeEvent) => setUserInspector(e.value)}
-                options={userInspectorList}
-                optionLabel="name"
-                placeholder="เลือกผู้รายงานผล"
-                filter
-                filterDelay={400}
-                valueTemplate={selectedUserInspectorTemplate}
-                itemTemplate={UserInspectorOptionTemplate}
-                className="w-full md:w-14rem"
-                showClear
+      {fieldRadios.map((field) => (
+        <div key={field.key} className="col-12 md:col-6 lg:col-4">
+          <div className="p-3 ">
+            <label className="font-bold block mb-2">{field.label}</label>
+
+            <div className="flex align-items-center gap-3">
+              <RadioButton
+                inputId={`${field.key}_true`}
+                name={field.key}
+                value={true}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    [field.key]: e.value,
+                  }))
+                }
+                checked={form[field.key] === true}
               />
+              <label htmlFor={`${field.key}_true`}>ปกติ</label>
+
+              <RadioButton
+                inputId={`${field.key}_false`}
+                name={field.key}
+                value={false}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    [field.key]: e.value,
+                  }))
+                }
+                checked={form[field.key] === false}
+              />
+              <label htmlFor={`${field.key}_false`}>ผิดปกติ</label>
             </div>
           </div>
         </div>
+      ))}
 
-        <div className="card flex flex-wrap justify-center gap-3 pt-5">
-          <Button
-            onClick={() => router.push("/water-reports")}
-            label="ย้อนกลับ"
-            severity="danger"
-          />
-          <Button
-            label="บันทึก"
-            icon="pi pi-check"
-            severity="success"
-            onClick={handleSubmit}
+      <div className="flex flex-column align-items-center pt-5">
+        <label className="font-bold block mb-2">การตรวจวัดคุณภาพน้ำ</label>
+      </div>
+
+      <div className="grid pt-3 gap-3">
+        <div className="col-1 md:col-1">
+          <label className="font-bold block mb-2">DO</label>
+          <InputText
+            className="w-full"
+            placeholder="DO"
+            value={metrics.do_value}
+            onChange={(e) =>
+              setMetrics((prev) => ({
+                ...prev,
+                do_value: e.target.value,
+              }))
+            }
           />
         </div>
-      </Card>
+
+        <div className="col-2 md:col-2">
+          <label className="font-bold block mb-2">SV30</label>
+          <InputText
+            className="w-full"
+            placeholder="SV30"
+            value={metrics.sv30_value}
+            onChange={(e) =>
+              setMetrics((prev) => ({
+                ...prev,
+                sv30_value: e.target.value,
+              }))
+            }
+          />
+        </div>
+
+        <div className="col-3 md:col-3">
+          <label className="font-bold block mb-2">PH</label>
+          <InputText
+            className="w-full"
+            placeholder="PH"
+            value={metrics.ph_value}
+            onChange={(e) =>
+              setMetrics((prev) => ({
+                ...prev,
+                ph_value: e.target.value,
+              }))
+            }
+          />
+        </div>
+      </div>
+
+      <div className="pt-3">
+        <label className="font-bold block mb-2">หมายเหตุ</label>
+        <InputTextarea
+          rows={5}
+          className="w-full"
+          autoResize
+          placeholder="กรอกหมายเหตุเพิ่มเติม..."
+          value={remark ?? ""}
+          onChange={(e) => setRemark(e.target.value)}
+        />
+      </div>
+
+      <div className="pt-5 w-full">
+        <div className="flex-auto">
+          <label>ผู้รายงานผล</label>
+          <div className="flex-1 pt-1">
+            <Dropdown
+              value={userInspector}
+              onChange={(e: DropdownChangeEvent) => {
+                console.log("Selected:", e.value);
+                setUserInspector(e.value);
+              }}
+              options={userInspectorList || []}
+              optionLabel="firstName" // ใช้อะไรก็ได้ (จำเป็นต้องมี)
+              placeholder="เลือกผู้รายงานผล"
+              itemTemplate={(option) => <div>{getFullName(option)}</div>}
+              valueTemplate={(option, props) =>
+                option ? (
+                  <div>{getFullName(option)}</div>
+                ) : (
+                  <span>{props.placeholder}</span>
+                )
+              }
+              className="w-full"
+              showClear
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="card flex flex-wrap justify-center gap-3 pt-5">
+        <Button
+          onClick={() => router.push("/water-reports")}
+          label="ย้อนกลับ"
+          severity="danger"
+        />
+        <Button
+          label="บันทึก"
+          icon="pi pi-check"
+          severity="success"
+          onClick={handleSubmit}
+        />
+      </div>
     </div>
   );
 }

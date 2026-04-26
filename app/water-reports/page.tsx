@@ -338,7 +338,7 @@ export default function WaterReportFrom() {
   };
 
   return (
-    <div className="card">
+    <div>
       <div
         style={{
           display: "flex",
@@ -346,8 +346,7 @@ export default function WaterReportFrom() {
           alignItems: "center",
         }}
       >
-        <h1 style={{ margin: 0 }}>รายการระบบน้ำเสียรายวัน</h1>
-
+        <h1 className="text-4xl font-bold">รายการระบบน้ำเสียรายวัน</h1>
         <Button
           label="เพิ่มรายการ"
           icon="pi pi-plus"
@@ -376,6 +375,14 @@ export default function WaterReportFrom() {
           emptyMessage="ไม่พบข้อมูล."
           currentPageReportTemplate="กำลังแสดง {first} ถึง {last} จากทั้งหมด {totalRecords} รายการ"
         >
+          <Column
+            field="work_date"
+            header="วันที่บันทึก"
+            sortable
+            filterPlaceholder="Search by name"
+            style={{ minWidth: "8rem" }}
+            body={(row) => formatThaiDate(row.work_date)}
+          />
           <Column
             field="system_status"
             header="การทำงานของระบบ"
@@ -433,12 +440,12 @@ export default function WaterReportFrom() {
             style={{ minWidth: "5rem" }}
           />
           <Column
-            field="work_date"
-            header="วันที่บันทึก"
+            field="createdAt"
+            header="วันที่ลงข้อมูล"
             sortable
             filterPlaceholder="Search by name"
             style={{ minWidth: "8rem" }}
-            body={(row) => formatThaiDate(row.work_date)}
+            body={(row) => formatThaiDate(row.createdAt)}
           />
           <Column
             header="Action"

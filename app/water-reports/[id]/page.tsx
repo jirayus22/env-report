@@ -31,10 +31,13 @@ import {
 
 type ICallback = (event: React.SyntheticEvent<Element, Event>) => void;
 
-interface UserInspector {
-  name: string;
-  code: string;
-}
+type UserInspector = {
+  _id: string;
+  pre_name: number;
+  first_name: string;
+  last_name: string;
+};
+
 export default function Page() {
   const router = useRouter();
   const searchParams = useParams();
@@ -49,6 +52,10 @@ export default function Page() {
   const [userInspector, setUserInspector] = useState<UserInspector | null>(
     null,
   );
+  const [userInspectorList, setUserInspectorList] = useState<
+    UserInspector[] | null
+  >(null);
+
   const [remark, setRemark] = useState<string | null>("");
 
   const fieldRadios = [
@@ -73,6 +80,19 @@ export default function Page() {
     ph_value: "",
   });
 
+  const convertPreName = (pre_name: number) => {
+    switch (pre_name) {
+      case 1:
+        return "นาย";
+      case 2:
+        return "นางสาว";
+      case 3:
+        return "นาง";
+      default:
+        return "";
+    }
+  };
+
   useEffect(() => {
     if (!id) return; // 👈 สำคัญมาก
 
@@ -83,7 +103,7 @@ export default function Page() {
       const json = await res.json();
 
       const op = json.data;
-
+      console.log("op : " + JSON.stringify(op));
       setOperation(op);
 
       setForm({
@@ -102,42 +122,36 @@ export default function Page() {
 
       setDate(op.work_date ? new Date(op.work_date) : null);
       setRemark(op.remark ?? "");
+      setUserInspector(op.created_by);
     };
 
     getData();
   }, [id]);
 
   useEffect(() => {
+    console.log("userInspector:", userInspector);
     console.log("Operations:", operation);
-  }, [operation]);
+  }, [operation, userInspector]);
 
-  const userInspectorList: UserInspector[] = [
-    { name: "นางสาวอรญา แก้วตา", code: "1" },
-    { name: "นายจิรายุส ไทยอุทัย", code: "2" },
-  ];
+  useEffect(() => {
+    const getUser = async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/user`);
+      const json = await res.json();
 
-  const selectedUserInspectorTemplate = (
-    option: UserInspector,
-    props: DropdownProps,
-  ) => {
-    if (option) {
-      return (
-        <div className="flex align-items-center">
-          <div>{option.name}</div>
-        </div>
-      );
-    }
+      const uesrsResponse = json.data;
+      console.log("Users Response:", uesrsResponse);
+      setUserInspectorList(uesrsResponse as UserInspector[]);
+    };
 
-    return <span>{props.placeholder}</span>;
-  };
+    getUser();
+  }, []);
 
-  const UserInspectorOptionTemplate = (option: UserInspector) => {
-    return (
-      <div className="flex align-items-center">
-        <div>{option.name}</div>
-      </div>
-    );
-  };
+  useEffect(() => {
+    console.log("User Inspector List:", userInspectorList);
+  }, [userInspectorList]);
+
+  const getFullName = (u: UserInspector) =>
+    convertPreName(u.pre_name) + `${u.first_name} ${u.last_name}`;
 
   const onTemplateSelect = (e: FileUploadSelectEvent) => {
     let _totalSize = totalSize;
@@ -284,16 +298,18 @@ export default function Page() {
 
   const handleSubmit = async () => {
     const isEdit = !!operation?._id;
-
+    console.log("userInspector update : " + userInspector);
     const payload = {
       ...form,
       do_value: Number(metrics.do_value),
       sv30_value: Number(metrics.sv30_value),
       ph_value: Number(metrics.ph_value),
       work_date: date ? date.toISOString() : null,
-      inspector: userInspector?.code,
-      remark,
+      // created_by: userInspector ?? null,
+      remark: remark,
     };
+
+    console.log("payload : " + JSON.stringify(payload));
 
     const url = isEdit
       ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations/${operation._id}`
@@ -303,7 +319,11 @@ export default function Page() {
       title: "แจ้งเตือน!",
       text: "ต้องการบันทึกข้อมูลใช่หรือไม่?",
       icon: "warning",
+      showCancelButton: true,
       confirmButtonText: "ตกลง",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#d33",
     }).then(async (result) => {
       if (result.isConfirmed) {
         const res = await fetch(url, {
@@ -330,204 +350,201 @@ export default function Page() {
   };
 
   return (
-    <div className="p-4">
-      <Card
-        subTitle="บันทึกระบบน้ำเสีย"
-        pt={{
-          subTitle: {
-            style: { fontSize: "1.5rem", fontWeight: "bold" },
-          },
-        }}
-      >
-        <div>
-          <Toast ref={toast}></Toast>
+    <div>
+      <h1 className="text-4xl font-bold">บันทึกระบบน้ำเสีย (แก้ไข)</h1>
+      <div className="pt-5">
+        <Toast ref={toast}></Toast>
 
-          <Tooltip
-            target=".custom-choose-btn"
-            content="Choose"
-            position="bottom"
-          />
-          <Tooltip
-            target=".custom-upload-btn"
-            content="Upload"
-            position="bottom"
-          />
-          <Tooltip
-            target=".custom-cancel-btn"
-            content="Clear"
-            position="bottom"
-          />
+        <Tooltip
+          target=".custom-choose-btn"
+          content="Choose"
+          position="bottom"
+        />
+        <Tooltip
+          target=".custom-upload-btn"
+          content="Upload"
+          position="bottom"
+        />
+        <Tooltip
+          target=".custom-cancel-btn"
+          content="Clear"
+          position="bottom"
+        />
 
-          <FileUpload
-            ref={fileUploadRef}
-            name="demo[]"
-            url="/api/upload"
-            multiple
-            accept="image/*"
-            maxFileSize={1000000}
-            onUpload={onTemplateUpload}
-            onSelect={onTemplateSelect}
-            onError={onTemplateClear}
-            onClear={onTemplateClear}
-            headerTemplate={headerTemplate}
-            itemTemplate={itemTemplate}
-            emptyTemplate={emptyTemplate}
-            chooseOptions={chooseOptions}
-            uploadOptions={uploadOptions}
-            cancelOptions={cancelOptions}
-          />
-        </div>
+        <FileUpload
+          ref={fileUploadRef}
+          name="demo[]"
+          url="/api/upload"
+          multiple
+          accept="image/*"
+          maxFileSize={1000000}
+          onUpload={onTemplateUpload}
+          onSelect={onTemplateSelect}
+          onError={onTemplateClear}
+          onClear={onTemplateClear}
+          headerTemplate={headerTemplate}
+          itemTemplate={itemTemplate}
+          emptyTemplate={emptyTemplate}
+          chooseOptions={chooseOptions}
+          uploadOptions={uploadOptions}
+          cancelOptions={cancelOptions}
+        />
+      </div>
 
-        <div className="pt-5 w-full">
-          <div className="flex-auto">
-            <label htmlFor="buttondisplay" className="font-bold block mb-2">
-              วันที่บันทึก
-            </label>
-            <Calendar
-              id="buttondisplay"
-              value={date}
-              onChange={(e) => setDate(e.value)}
-              showIcon
-            />
-          </div>
-        </div>
-
-        {fieldRadios.map((field) => (
-          <div key={field.key} className="col-12 md:col-6 lg:col-4">
-            <div className="p-3 ">
-              <label className="font-bold block mb-2">{field.label}</label>
-
-              <div className="flex align-items-center gap-3">
-                <RadioButton
-                  inputId={`${field.key}_true`}
-                  name={field.key}
-                  value={true}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [field.key]: e.value,
-                    }))
-                  }
-                  checked={form[field.key] === true}
-                />
-                <label htmlFor={`${field.key}_true`}>ปกติ</label>
-
-                <RadioButton
-                  inputId={`${field.key}_false`}
-                  name={field.key}
-                  value={false}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [field.key]: e.value,
-                    }))
-                  }
-                  checked={form[field.key] === false}
-                />
-                <label htmlFor={`${field.key}_false`}>ผิดปกติ</label>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <div className="flex flex-column align-items-center pt-5">
-          <label className="font-bold block mb-2">การตรวจวัดคุณภาพน้ำ</label>
-        </div>
-
-        <div className="grid pt-3 gap-3">
-          <div className="col-1 md:col-1">
-            <label className="font-bold block mb-2">DO</label>
-            <InputText
-              className="w-full"
-              placeholder="DO"
-              value={metrics.do_value}
-              onChange={(e) =>
-                setMetrics((prev) => ({
-                  ...prev,
-                  do_value: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="col-2 md:col-2">
-            <label className="font-bold block mb-2">SV30</label>
-            <InputText
-              className="w-full"
-              placeholder="SV30"
-              value={metrics.sv30_value}
-              onChange={(e) =>
-                setMetrics((prev) => ({
-                  ...prev,
-                  sv30_value: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="col-3 md:col-3">
-            <label className="font-bold block mb-2">PH</label>
-            <InputText
-              className="w-full"
-              placeholder="PH"
-              value={metrics.ph_value}
-              onChange={(e) =>
-                setMetrics((prev) => ({
-                  ...prev,
-                  ph_value: e.target.value,
-                }))
-              }
-            />
-          </div>
-        </div>
-
-        <div className="pt-3">
-          <label className="font-bold block mb-2">หมายเหตุ</label>
-          <InputTextarea
-            rows={5}
-            className="w-full"
-            autoResize
-            placeholder="กรอกหมายเหตุเพิ่มเติม..."
-            value={operation?.remark}
-            onChange={(e) => setRemark(e.target.value)}
+      <div className="pt-5 w-full">
+        <div className="flex-auto">
+          <label htmlFor="buttondisplay" className="font-bold block mb-2">
+            วันที่บันทึก
+          </label>
+          <Calendar
+            id="buttondisplay"
+            value={date}
+            onChange={(e) => setDate(e.value)}
+            showIcon
           />
         </div>
+      </div>
 
-        <div className="pt-5 w-full">
-          <div className="flex-auto">
-            <label>ผู้รายงานผล</label>
-            <div className="flex-1 pt-1">
-              <Dropdown
-                value={userInspector}
-                onChange={(e: DropdownChangeEvent) => setUserInspector(e.value)}
-                options={userInspectorList}
-                optionLabel="name"
-                placeholder="เลือกผู้รายงานผล"
-                filter
-                filterDelay={400}
-                valueTemplate={selectedUserInspectorTemplate}
-                itemTemplate={UserInspectorOptionTemplate}
-                className="w-full md:w-14rem"
-                showClear
+      {fieldRadios.map((field) => (
+        <div key={field.key} className="col-12 md:col-6 lg:col-4">
+          <div className="p-3 ">
+            <label className="font-bold block mb-2">{field.label}</label>
+
+            <div className="flex align-items-center gap-3">
+              <RadioButton
+                inputId={`${field.key}_true`}
+                name={field.key}
+                value={true}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    [field.key]: e.value,
+                  }))
+                }
+                checked={form[field.key] === true}
               />
+              <label htmlFor={`${field.key}_true`}>ปกติ</label>
+
+              <RadioButton
+                inputId={`${field.key}_false`}
+                name={field.key}
+                value={false}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    [field.key]: e.value,
+                  }))
+                }
+                checked={form[field.key] === false}
+              />
+              <label htmlFor={`${field.key}_false`}>ผิดปกติ</label>
             </div>
           </div>
         </div>
+      ))}
 
-        <div className="card flex flex-wrap justify-center gap-3 pt-5">
-          <Button
-            onClick={() => router.push("/water-reports")}
-            label="ย้อนกลับ"
-            severity="danger"
-          />
-          <Button
-            label="บันทึก"
-            icon="pi pi-check"
-            severity="success"
-            onClick={handleSubmit}
+      <div className="flex flex-column align-items-center pt-5">
+        <label className="font-bold block mb-2">การตรวจวัดคุณภาพน้ำ</label>
+      </div>
+
+      <div className="grid pt-3 gap-3">
+        <div className="col-1 md:col-1">
+          <label className="font-bold block mb-2">DO</label>
+          <InputText
+            className="w-full"
+            placeholder="DO"
+            value={metrics.do_value}
+            onChange={(e) =>
+              setMetrics((prev) => ({
+                ...prev,
+                do_value: e.target.value,
+              }))
+            }
           />
         </div>
-      </Card>
+
+        <div className="col-2 md:col-2">
+          <label className="font-bold block mb-2">SV30</label>
+          <InputText
+            className="w-full"
+            placeholder="SV30"
+            value={metrics.sv30_value}
+            onChange={(e) =>
+              setMetrics((prev) => ({
+                ...prev,
+                sv30_value: e.target.value,
+              }))
+            }
+          />
+        </div>
+
+        <div className="col-3 md:col-3">
+          <label className="font-bold block mb-2">PH</label>
+          <InputText
+            className="w-full"
+            placeholder="PH"
+            value={metrics.ph_value}
+            onChange={(e) =>
+              setMetrics((prev) => ({
+                ...prev,
+                ph_value: e.target.value,
+              }))
+            }
+          />
+        </div>
+      </div>
+
+      <div className="pt-3">
+        <label className="font-bold block mb-2">หมายเหตุ</label>
+        <InputTextarea
+          rows={5}
+          className="w-full"
+          autoResize
+          placeholder="กรอกหมายเหตุเพิ่มเติม..."
+          value={remark ?? ""}
+          onChange={(e) => setRemark(e.target.value)}
+        />
+      </div>
+
+      <div className="pt-5 w-full">
+        <div className="flex-auto">
+          <label>ผู้รายงานผล</label>
+          <div className="flex-1 pt-1">
+            <Dropdown
+              value={userInspector}
+              onChange={(e) => setUserInspector(e.value)}
+              options={userInspectorList || []}
+              optionLabel="first_name"
+              optionValue="_id"
+              placeholder="เลือกผู้รายงานผล"
+              itemTemplate={(option) => <div>{getFullName(option)}</div>}
+              valueTemplate={(option, props) =>
+                option ? (
+                  <div>{getFullName(option)}</div>
+                ) : (
+                  <span>{props.placeholder}</span>
+                )
+              }
+              className="w-full"
+              showClear
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="card flex flex-wrap justify-center gap-3 pt-5">
+        <Button
+          onClick={() => router.push("/water-reports")}
+          label="ย้อนกลับ"
+          severity="danger"
+        />
+        <Button
+          label="บันทึก"
+          icon="pi pi-check"
+          severity="success"
+          onClick={handleSubmit}
+        />
+      </div>
     </div>
   );
 }
