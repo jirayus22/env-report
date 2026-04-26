@@ -1,35 +1,34 @@
 "use client";
 
 import { Card } from "primereact/card";
-import { Chart } from "primereact/chart";
-import { useMemo } from "react";
-
+import PiechartDay from "../components/graph/PiechartDay";
+import PiechartWeek from "../components/graph/PiechartWeek";
+import PiechartMonth from "../components/graph/PiechartMonth";
 export default function Home() {
-  const chartData = useMemo(() => {
-    return {
-      labels: ["A", "B", "C"],
-      datasets: [
-        {
-          data: [540, 325, 702],
-          backgroundColor: ["#42A5F5", "#66BB6A", "#FFA726"],
-          hoverBackgroundColor: ["#64B5F6", "#81C784", "#FFB74D"],
-        },
-      ],
-    };
-  }, []);
+  const getDayThai = (type: "full" | "month" = "full") => {
+    const d = new Date();
 
-  const chartOptions = useMemo(() => {
-    return {
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: {
-            usePointStyle: true,
-          },
-        },
-      },
-    };
-  }, []);
+    const months = [
+      "มกราคม",
+      "กุมภาพันธ์",
+      "มีนาคม",
+      "เมษายน",
+      "พฤษภาคม",
+      "มิถุนายน",
+      "กรกฎาคม",
+      "สิงหาคม",
+      "กันยายน",
+      "ตุลาคม",
+      "พฤศจิกายน",
+      "ธันวาคม",
+    ];
+
+    if (type === "month") {
+      return months[d.getMonth()];
+    }
+
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+  };
 
   return (
     <div className="p-4">
@@ -37,40 +36,33 @@ export default function Home() {
         {/* ✅ Card 1 (ใส่ Chart) */}
         <Card
           title="รายงานระบบน้ำเสียรายวัน"
-          subTitle="Statistics"
-          style={{ backgroundColor: "#eaeaea", border: "none" }}
+          subTitle={`ประจำวันที่ ${getDayThai()}`}
+          style={{ backgroundColor: "#ededed3f", border: "none" }}
         >
-          <Chart
-            type="pie"
-            data={chartData}
-            options={chartOptions}
-            className="w-full"
-          />
+          <PiechartDay />
         </Card>
 
         {/* Card 2 */}
         <Card
-          title="Card 2"
-          subTitle="Details"
-          style={{ backgroundColor: "#eaeaea", border: "none" }}
+          title="รายงานระบบน้ำเสียรายสัปดาห์"
+          subTitle="รายสัปดาห์"
+          style={{ backgroundColor: "#ededed3f", border: "none" }}
         >
-          <p className="m-0">Repellat libero asperiores earum nam nobis...</p>
+          <PiechartWeek />
         </Card>
 
         {/* Card 3 */}
         <Card
-          title="Card 3"
-          subTitle="Summary"
-          style={{ backgroundColor: "#eaeaea", border: "none" }}
+          title="รายงานระบบน้ำเสียรายเดือน"
+          subTitle={`ประจำเดือน ${getDayThai("month")}`}
+          style={{ backgroundColor: "#ededed3f", border: "none" }}
         >
-          <p className="m-0">
-            Consequuntur error repudiandae numquam deserunt...
-          </p>
+          <PiechartMonth />
         </Card>
       </div>
 
       {/* Bottom Card */}
-      <div className="pt-10">
+      {/* <div className="pt-10">
         <Card
           title="Extra Card"
           subTitle="Summary"
@@ -78,7 +70,7 @@ export default function Home() {
         >
           <p className="m-0">This is another card below the grid.</p>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }
