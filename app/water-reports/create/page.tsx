@@ -1,8 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
-
+import { use } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Operation } from "../../types/Operation";
+import { useRouter } from "next/navigation";
 import { Card } from "primereact/card";
-import React, { useRef, useState } from "react";
 import { Toast } from "primereact/toast";
 import {
   FileUpload,
@@ -21,7 +22,7 @@ import { Calendar } from "primereact/calendar";
 import { Nullable } from "primereact/ts-helpers";
 import { RadioButton, RadioButtonChangeEvent } from "primereact/radiobutton";
 import { InputText } from "primereact/inputtext";
-import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 import {
   Dropdown,
   DropdownChangeEvent,
@@ -30,18 +31,22 @@ import {
 
 type ICallback = (event: React.SyntheticEvent<Element, Event>) => void;
 
-interface Country {
+interface UserInspector {
   name: string;
   code: string;
 }
+export default function Page() {
+  const [operation, setOperation] = useState<Operation | null>(null);
 
-export default function WaterReport() {
   const router = useRouter();
   const toast = useRef<Toast>(null);
   const [totalSize, setTotalSize] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
   const [date, setDate] = useState<Nullable<Date>>(null);
-  const [ingredient, setIngredient] = useState<string>("");
+  const [userInspector, setUserInspector] = useState<UserInspector | null>(
+    null,
+  );
+  const [remark, setRemark] = useState<string | null>("");
 
   const fieldRadios = [
     { key: "system_status", label: "การทำงานของระบบ" },
@@ -58,6 +63,44 @@ export default function WaterReport() {
     sludge_pump_status: null,
     chlorine_status: null,
   });
+
+  const [metrics, setMetrics] = useState({
+    do_value: "",
+    sv30_value: "",
+    ph_value: "",
+  });
+
+  useEffect(() => {
+    console.log("Operations:", operation);
+  }, [operation]);
+
+  const userInspectorList: UserInspector[] = [
+    { name: "นางสาวอรญา แก้วตา", code: "1" },
+    { name: "นายจิรายุส ไทยอุทัย", code: "2" },
+  ];
+
+  const selectedUserInspectorTemplate = (
+    option: UserInspector,
+    props: DropdownProps,
+  ) => {
+    if (option) {
+      return (
+        <div className="flex align-items-center">
+          <div>{option.name}</div>
+        </div>
+      );
+    }
+
+    return <span>{props.placeholder}</span>;
+  };
+
+  const UserInspectorOptionTemplate = (option: UserInspector) => {
+    return (
+      <div className="flex align-items-center">
+        <div>{option.name}</div>
+      </div>
+    );
+  };
 
   const onTemplateSelect = (e: FileUploadSelectEvent) => {
     let _totalSize = totalSize;
@@ -202,41 +245,51 @@ export default function WaterReport() {
       "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined",
   };
 
-  const splitDateTime = (date: string | Date) => {
-    const d = new Date(date);
-
-    return {
-      date: d.toLocaleDateString("th-TH"),
-      time: d.toLocaleTimeString("th-TH", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+  const handleSubmit = async () => {
+    const payload = {
+      ...form,
+      project_id: "69e8f9d2335b5983d11f74f5",
+      created_by: "69edc8f0f4be91db77f348ca",
+      do_value: Number(metrics.do_value),
+      sv30_value: Number(metrics.sv30_value),
+      ph_value: Number(metrics.ph_value),
+      work_date: date ? date.toISOString() : null,
+      remark,
     };
-  };
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-  const countries: Country[] = [
-    { name: "นางสาวอรญา แก้วตา", code: "1" },
-    { name: "นายจิรายุส ไทยอุทัย", code: "2" },
-  ];
 
-  const selectedCountryTemplate = (option: Country, props: DropdownProps) => {
-    if (option) {
-      return (
-        <div className="flex align-items-center">
-          <div>{option.name}</div>
-        </div>
-      );
-    }
+    console.log("Payload to submit:", payload);
 
-    return <span>{props.placeholder}</span>;
-  };
+    Swal.fire({
+      title: "แจ้งเตือน!",
+      text: "ต้องการบันทึกข้อมูลใช่หรือไม่?",
+      icon: "warning",
+      confirmButtonText: "ตกลง",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations`,
+          {
+            method: "POST", // 👈 create เท่านั้น
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          },
+        );
 
-  const countryOptionTemplate = (option: Country) => {
-    return (
-      <div className="flex align-items-center">
-        <div>{option.name}</div>
-      </div>
-    );
+        const data = await res.json();
+
+        if (data.success) {
+          Swal.fire("สำเร็จ!", "ข้อมูลของคุณถูกบันทึกแล้ว.", "success").then(
+            () => {
+              router.push("/water-reports");
+            },
+          );
+        } else {
+          Swal.fire("เกิดข้อผิดพลาด!", "ไม่สามารถบันทึกข้อมูลได้.", "error");
+        }
+      }
+    });
   };
 
   return (
@@ -347,17 +400,47 @@ export default function WaterReport() {
         <div className="grid pt-3 gap-3">
           <div className="col-1 md:col-1">
             <label className="font-bold block mb-2">DO</label>
-            <InputText className="w-full" placeholder="DO" />
+            <InputText
+              className="w-full"
+              placeholder="DO"
+              value={metrics.do_value}
+              onChange={(e) =>
+                setMetrics((prev) => ({
+                  ...prev,
+                  do_value: e.target.value,
+                }))
+              }
+            />
           </div>
 
           <div className="col-2 md:col-2">
             <label className="font-bold block mb-2">SV30</label>
-            <InputText className="w-full" placeholder="SV30" />
+            <InputText
+              className="w-full"
+              placeholder="SV30"
+              value={metrics.sv30_value}
+              onChange={(e) =>
+                setMetrics((prev) => ({
+                  ...prev,
+                  sv30_value: e.target.value,
+                }))
+              }
+            />
           </div>
 
           <div className="col-3 md:col-3">
             <label className="font-bold block mb-2">PH</label>
-            <InputText className="w-full" placeholder="PH" />
+            <InputText
+              className="w-full"
+              placeholder="PH"
+              value={metrics.ph_value}
+              onChange={(e) =>
+                setMetrics((prev) => ({
+                  ...prev,
+                  ph_value: e.target.value,
+                }))
+              }
+            />
           </div>
         </div>
 
@@ -368,6 +451,8 @@ export default function WaterReport() {
             className="w-full"
             autoResize
             placeholder="กรอกหมายเหตุเพิ่มเติม..."
+            value={remark ?? ""}
+            onChange={(e) => setRemark(e.target.value)}
           />
         </div>
 
@@ -376,17 +461,15 @@ export default function WaterReport() {
             <label>ผู้ตรวจสอบ</label>
             <div className="flex-1 pt-1">
               <Dropdown
-                value={selectedCountry}
-                onChange={(e: DropdownChangeEvent) =>
-                  setSelectedCountry(e.value)
-                }
-                options={countries}
+                value={userInspector}
+                onChange={(e: DropdownChangeEvent) => setUserInspector(e.value)}
+                options={userInspectorList}
                 optionLabel="name"
                 placeholder="เลือกผู้ตรวจสอบ"
                 filter
                 filterDelay={400}
-                valueTemplate={selectedCountryTemplate}
-                itemTemplate={countryOptionTemplate}
+                valueTemplate={selectedUserInspectorTemplate}
+                itemTemplate={UserInspectorOptionTemplate}
                 className="w-full md:w-14rem"
                 showClear
               />
@@ -396,11 +479,16 @@ export default function WaterReport() {
 
         <div className="card flex flex-wrap justify-center gap-3 pt-5">
           <Button
-            onClick={() => router.push("/water-report")}
+            onClick={() => router.push("/water-reports")}
             label="ย้อนกลับ"
             severity="danger"
           />
-          <Button label="บันทึก" icon="pi pi-check" severity="success" />
+          <Button
+            label="บันทึก"
+            icon="pi pi-check"
+            severity="success"
+            onClick={handleSubmit}
+          />
         </div>
       </Card>
     </div>

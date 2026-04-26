@@ -1,8 +1,8 @@
 "use client";
-import { use } from "react";
+import { useRouter as useNextRoute } from "next/router";
 import React, { useState, useEffect, useRef } from "react";
 import { Operation } from "../../types/Operation";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Card } from "primereact/card";
 import { Toast } from "primereact/toast";
 import {
@@ -35,13 +35,13 @@ interface UserInspector {
   name: string;
   code: string;
 }
-
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function Page() {
+  const router = useRouter();
+  const searchParams = useParams();
+  const id = searchParams.id;
+  console.log("ID from URL:", id);
 
   const [operation, setOperation] = useState<Operation | null>(null);
-
-  const router = useRouter();
   const toast = useRef<Toast>(null);
   const [totalSize, setTotalSize] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
@@ -74,6 +74,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   });
 
   useEffect(() => {
+    if (!id) return; // 👈 สำคัญมาก
+
     const getData = async () => {
       const res = await fetch(
         `http://localhost:8080/api/v1/operations?id=${id}`,
@@ -90,7 +92,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         aerator_status: op.aerator_status ?? null,
         sludge_pump_status: op.sludge_pump_status ?? null,
         chlorine_status: op.chlorine_status ?? null,
-        remark: op.remark ?? "",
       });
 
       setMetrics({
@@ -100,6 +101,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       });
 
       setDate(op.work_date ? new Date(op.work_date) : null);
+      setRemark(op.remark ?? "");
     };
 
     getData();
@@ -317,7 +319,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         if (data.success) {
           Swal.fire("สำเร็จ!", "ข้อมูลของคุณถูกบันทึกแล้ว.", "success").then(
             () => {
-              router.push("/water-report");
+              router.push("/water-reports");
             },
           );
         } else {
@@ -514,7 +516,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
         <div className="card flex flex-wrap justify-center gap-3 pt-5">
           <Button
-            onClick={() => router.push("/water-report")}
+            onClick={() => router.push("/water-reports")}
             label="ย้อนกลับ"
             severity="danger"
           />

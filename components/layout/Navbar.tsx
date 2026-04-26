@@ -24,7 +24,7 @@ export default function Navbar() {
     {
       label: "รายงานระบบน้ำเสีย",
       icon: "pi pi-home",
-      url: "/water-report",
+      url: "/water-reports",
       //template: itemRenderer,
     },
     {

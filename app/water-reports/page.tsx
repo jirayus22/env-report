@@ -352,7 +352,7 @@ export default function WaterReportFrom() {
           label="เพิ่มรายการ"
           icon="pi pi-plus"
           severity="success"
-          onClick={() => router.push("/water-report-from")}
+          onClick={() => router.push("/water-reports/create")}
         />
       </div>
 
@@ -449,7 +449,7 @@ export default function WaterReportFrom() {
                 rounded
                 text
                 style={{ fontSize: "5rem" }} // 🔥 ขยายไอคอน
-                onClick={() => router.push(`/water-report-from/${rowData._id}`)}
+                onClick={() => router.push(`/water-reports/${rowData._id}`)}
               />
             )}
           />
