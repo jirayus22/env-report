@@ -78,7 +78,7 @@ export default function Page() {
 
     const getData = async () => {
       const res = await fetch(
-        `http://localhost:8080/api/v1/operations?id=${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations?id=${id}`,
       );
       const json = await res.json();
 
@@ -296,8 +296,8 @@ export default function Page() {
     };
 
     const url = isEdit
-      ? `http://localhost:8080/api/v1/operations/${operation._id}`
-      : `http://localhost:8080/api/v1/operations`;
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations/${operation._id}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations`;
 
     Swal.fire({
       title: "แจ้งเตือน!",
@@ -495,14 +495,14 @@ export default function Page() {
 
         <div className="pt-5 w-full">
           <div className="flex-auto">
-            <label>ผู้ตรวจสอบ</label>
+            <label>ผู้รายงานผล</label>
             <div className="flex-1 pt-1">
               <Dropdown
                 value={userInspector}
                 onChange={(e: DropdownChangeEvent) => setUserInspector(e.value)}
                 options={userInspectorList}
                 optionLabel="name"
-                placeholder="เลือกผู้ตรวจสอบ"
+                placeholder="เลือกผู้รายงานผล"
                 filter
                 filterDelay={400}
                 valueTemplate={selectedUserInspectorTemplate}

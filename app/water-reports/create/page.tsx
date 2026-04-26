@@ -458,14 +458,14 @@ export default function Page() {
 
         <div className="pt-5 w-full">
           <div className="flex-auto">
-            <label>ผู้ตรวจสอบ</label>
+            <label>ผู้รายงานผล</label>
             <div className="flex-1 pt-1">
               <Dropdown
                 value={userInspector}
                 onChange={(e: DropdownChangeEvent) => setUserInspector(e.value)}
                 options={userInspectorList}
                 optionLabel="name"
-                placeholder="เลือกผู้ตรวจสอบ"
+                placeholder="เลือกผู้รายงานผล"
                 filter
                 filterDelay={400}
                 valueTemplate={selectedUserInspectorTemplate}
