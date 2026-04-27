@@ -67,6 +67,8 @@ export default function WaterReportFrom() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
         }}
       >
         <h1 className="text-4xl font-bold">รายการระบบน้ำเสียรายวัน</h1>
