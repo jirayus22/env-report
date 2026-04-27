@@ -36,7 +36,7 @@ export default function Home() {
   };
 
   return (
-    <div className="px-4 pb-4">
+    <div className="p-4 pt-0">
       {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         <Card
@@ -63,9 +63,9 @@ export default function Home() {
           <PiechartMonth />
         </Card>
       </div> */}
-      <h1 className="text-4xl font-bold text-center">Dashboard</h1>
-      <h1 className="text-4xl font-bold text-center pt-3">
-        รายงานระบบน้ำเสียรายวัน
+
+      <h1 className="text-4xl font-bold text-center">
+        Dashboard : รายงานระบบน้ำเสีย
       </h1>
       <div className="flex-1 pt-3 text-center">
         <Dropdown
