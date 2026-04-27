@@ -5,6 +5,7 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Operation } from "../types/Operation";
 import { useRouter } from "next/navigation";
+import ExportExcel from "../exportexcel/page";
 
 export default function WaterReportFrom() {
   const [operations, setOperations] = useState<Operation[]>([]);
@@ -77,6 +78,7 @@ export default function WaterReportFrom() {
             tooltip="รีเฟรชข้อมูล"
             tooltipOptions={{ position: "top" }}
           />
+          <ExportExcel />
           <Button
             label="เพิ่มรายการ"
             icon="pi pi-plus"
