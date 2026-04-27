@@ -44,7 +44,7 @@ body {
 
 /* hover row */
 .bordered-table .p-datatable-tbody > tr:hover {
-  background: #f3f4f6;
+  background: #d1ffd5;
 }
 
 body,

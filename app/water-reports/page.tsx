@@ -113,42 +113,42 @@ export default function WaterReportFrom() {
             header="วันที่บันทึก"
             sortable
             filterPlaceholder="Search by name"
-            style={{ minWidth: "8rem" }}
+            style={{ width: "155px" }}
             body={(row) => formatThaiDate(row.work_date)}
           />
           <Column
             field="system_status"
             header="การทำงานของระบบ"
             filterPlaceholder="Search by name"
-            style={{ minWidth: "3rem" }}
+            style={{ width: "170px" }}
             body={(row) => statusTemplate(row.system_status)}
           />
           <Column
             field="pump_status"
             header="เครื่องสูบน้ำเสีย"
             filterPlaceholder="Search by name"
-            style={{ minWidth: "5rem" }}
+            style={{ width: "160px" }}
             body={(row) => statusTemplate(row.pump_status)}
           />
           <Column
             field="aerator_status"
             header="เครื่องเติมอากาศ"
             filterPlaceholder="Search by name"
-            style={{ minWidth: "8rem" }}
+            style={{ width: "160px" }}
             body={(row) => statusTemplate(row.aerator_status)}
           />
           <Column
             field="sludge_pump_status"
             header="เครื่องสูบตะกอน"
             filterPlaceholder="Search by name"
-            style={{ minWidth: "8rem" }}
+            style={{ width: "160px" }}
             body={(row) => statusTemplate(row.sludge_pump_status)}
           />
           <Column
             field="chlorine_status"
             header="เครื่องหยดคลอรีน"
             filterPlaceholder="Search by name"
-            style={{ minWidth: "8rem" }}
+            style={{ width: "160px" }}
             body={(row) => statusTemplate(row.chlorine_status)}
           />
           <Column
@@ -156,7 +156,7 @@ export default function WaterReportFrom() {
             header="DO"
             sortable
             filterPlaceholder="Search by name"
-            style={{ minWidth: "3rem" }}
+            style={{ width: "160px" }}
             body={(row) => (
               <span style={{ color: getColor("do", row.do_value) }}>
                 {row.do_value}
@@ -168,7 +168,7 @@ export default function WaterReportFrom() {
             header="SV30"
             sortable
             filterPlaceholder="Search by name"
-            style={{ minWidth: "5rem" }}
+            style={{ width: "160px" }}
             body={(row) => (
               <span style={{ color: getColor("sv30", row.sv30_value) }}>
                 {row.sv30_value}
@@ -180,7 +180,7 @@ export default function WaterReportFrom() {
             header="pH"
             sortable
             filterPlaceholder="Search by name"
-            style={{ minWidth: "5rem" }}
+            style={{ width: "160px" }}
             body={(row) => (
               <span style={{ color: getColor("ph", row.ph_value) }}>
                 {row.ph_value}
@@ -192,7 +192,7 @@ export default function WaterReportFrom() {
             header="วันที่ลงข้อมูล"
             sortable
             filterPlaceholder="Search by name"
-            style={{ minWidth: "8rem" }}
+            style={{ width: "155px" }}
             body={(row) => formatThaiDate(row.createdAt)}
           />
           <Column
@@ -205,7 +205,7 @@ export default function WaterReportFrom() {
                 tooltipOptions={{ position: "top" }}
                 rounded
                 text
-                style={{ fontSize: "5rem" }} // 🔥 ขยายไอคอน
+                style={{ width: "80px" }} // 🔥 ขยายไอคอน
                 onClick={() => router.push(`/water-reports/${rowData._id}`)}
               />
             )}
