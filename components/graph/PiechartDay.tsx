@@ -1,75 +1,120 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Chart } from "primereact/chart";
+import { ChartData, ChartOptions } from "chart.js";
 import { Operation } from "../../app/types/Operation";
 
-export default function PieChartDemo() {
+export default function ComboChart() {
+  const [chartData, setChartData] = useState<ChartData>();
+  const [chartOptions, setChartOptions] = useState<ChartOptions>({});
   const [operations, setOperations] = useState<Operation[]>([]);
 
-  const today = new Date().toISOString().split("T")[0];
-
   useEffect(() => {
-    const getData = async () => {
+    const fetchData = async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations`,
       );
+
       const json = await res.json();
+      const data = json.data;
       setOperations(json.data);
-    };
+      const documentStyle = getComputedStyle(document.documentElement);
+      const textColor = documentStyle.getPropertyValue("--text-color");
+      const textColorSecondary = documentStyle.getPropertyValue(
+        "--text-color-secondary",
+      );
+      const surfaceBorder = documentStyle.getPropertyValue("--surface-border");
 
-    getData();
-  }, []);
+      const labels = data.map((d: Operation) =>
+        new Date(d.work_date).toLocaleDateString("th-TH", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+      );
 
-  const getDateOnly = (date: string | Date | null) => {
-    if (!date) return null;
+      setChartData({
+        labels,
+        datasets: [
+          {
+            type: "line",
+            label: "DO",
+            data: data.map((d: Operation) => d.do_value),
+            borderColor: "#3B82F6",
+            tension: 0.4,
+          },
+          {
+            type: "line",
+            label: "SV30",
+            data: data.map((d: Operation) => d.sv30_value),
+            borderColor: "#22C55E",
+            tension: 0.4,
+          },
+          {
+            type: "line",
+            label: "pH",
+            data: data.map((d: Operation) => d.ph_value),
+            borderColor: "#F97316",
+            tension: 0.4,
+          },
+          {
+            type: "bar",
+            label: "DO",
+            data: data.map((d: Operation) => d.do_value),
+            backgroundColor: "#3B82F6",
+          },
+          {
+            type: "bar",
+            label: "SV30",
+            data: data.map((d: Operation) => d.sv30_value),
+            backgroundColor: "#22C55E",
+          },
+          {
+            type: "bar",
+            label: "pH",
+            data: data.map((d: Operation) => d.ph_value),
+            backgroundColor: "#F97316",
+          },
+        ],
+      });
 
-    const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  };
-
-  const summary = useMemo(() => {
-    const todayData = operations.filter((op) => {
-      return getDateOnly(op.work_date) === today;
-    });
-
-    return {
-      totalDO: todayData.reduce((s, i) => s + (i.do_value || 0), 0),
-      totalSV30: todayData.reduce((s, i) => s + (i.sv30_value || 0), 0),
-      totalPH: todayData.reduce((s, i) => s + (i.ph_value || 0), 0),
-    };
-  }, [operations]);
-
-  const chartData = useMemo(() => {
-    return {
-      labels: ["DO", "SV30", "pH"],
-      datasets: [
-        {
-          data: [summary.totalDO, summary.totalSV30, summary.totalPH],
-          backgroundColor: ["#42A5F5", "#66BB6A", "#FFA726"],
+      setChartOptions({
+        maintainAspectRatio: false,
+        aspectRatio: 0.6,
+        plugins: {
+          legend: {
+            labels: {
+              color: textColor,
+            },
+          },
         },
-      ],
-    };
-  }, [summary]);
-
-  const chartOptions = useMemo(() => {
-    return {
-      plugins: {
-        legend: {
-          position: "bottom",
+        scales: {
+          x: {
+            ticks: {
+              color: textColorSecondary,
+            },
+            grid: {
+              color: surfaceBorder,
+            },
+          },
+          y: {
+            ticks: {
+              color: textColorSecondary,
+            },
+            grid: {
+              color: surfaceBorder,
+            },
+          },
         },
-      },
+      });
     };
+
+    fetchData();
   }, []);
 
   return (
-    <div className="w-full flex justify-center">
-      <Chart
-        type="pie"
-        data={chartData}
-        options={chartOptions}
-        className="w-full md:w-30rem"
-      />
+    <div className="card">
+      <Chart type="bar" data={chartData} options={chartOptions} />
     </div>
   );
 }

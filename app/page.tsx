@@ -1,10 +1,15 @@
 "use client";
-
+import React, { useState } from "react";
 import { Card } from "primereact/card";
 import PiechartDay from "../components/graph/PiechartDay";
-import PiechartWeek from "../components/graph/PiechartWeek";
-import PiechartMonth from "../components/graph/PiechartMonth";
+import { Dropdown, DropdownChangeEvent } from "primereact/dropdown";
 export default function Home() {
+  const [period, setPeriod] = useState<string | null>(null);
+  const periodOptions = [
+    { label: "รายวัน", value: "day" },
+    { label: "รายเดือน", value: "month" },
+    { label: "รายปี", value: "year" },
+  ];
   const getDayThai = (type: "full" | "month" = "full") => {
     const d = new Date();
 
@@ -32,8 +37,8 @@ export default function Home() {
 
   return (
     <div className="p-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* ✅ Card 1 (ใส่ Chart) */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
         <Card
           title="รายงานระบบน้ำเสียรายวัน"
           subTitle={`ประจำวันที่ ${getDayThai()}`}
@@ -42,7 +47,6 @@ export default function Home() {
           <PiechartDay />
         </Card>
 
-        {/* Card 2 */}
         <Card
           title="รายงานระบบน้ำเสียรายสัปดาห์"
           subTitle="รายสัปดาห์"
@@ -51,7 +55,6 @@ export default function Home() {
           <PiechartWeek />
         </Card>
 
-        {/* Card 3 */}
         <Card
           title="รายงานระบบน้ำเสียรายเดือน"
           subTitle={`ประจำเดือน ${getDayThai("month")}`}
@@ -59,18 +62,28 @@ export default function Home() {
         >
           <PiechartMonth />
         </Card>
-      </div>
-
-      {/* Bottom Card */}
-      {/* <div className="pt-10">
-        <Card
-          title="Extra Card"
-          subTitle="Summary"
-          style={{ backgroundColor: "#eaeaea", border: "none" }}
-        >
-          <p className="m-0">This is another card below the grid.</p>
-        </Card>
       </div> */}
+      <h1 className="text-4xl font-bold text-center">Dashboard</h1>
+      <h1 className="text-4xl font-bold text-center pt-3">
+        รายงานระบบน้ำเสียรายวัน
+      </h1>
+      <div className="flex-1 pt-3 text-center">
+        <Dropdown
+          value={period}
+          onChange={(e: DropdownChangeEvent) => {
+            console.log("Selected period:", e.value);
+            setPeriod(e.value);
+          }}
+          options={periodOptions}
+          placeholder="เลือกช่วงเวลา"
+          showClear
+        />
+      </div>
+      <div className="pt-3">
+        <Card style={{ backgroundColor: "#ededed3f", border: "none" }}>
+          <PiechartDay />
+        </Card>
+      </div>
     </div>
   );
 }

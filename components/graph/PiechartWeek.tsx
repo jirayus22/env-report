@@ -1,85 +1,87 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Chart } from "primereact/chart";
+import { ChartData, ChartOptions } from "chart.js";
 import { Operation } from "../../app/types/Operation";
 
-export default function PieChartDemo() {
+export default function ComboChart() {
+  const [chartData, setChartData] = useState<ChartData>();
+  const [chartOptions, setChartOptions] = useState<ChartOptions>({});
   const [operations, setOperations] = useState<Operation[]>([]);
 
-  const today = new Date().toISOString().split("T")[0];
-
   useEffect(() => {
-    const getData = async () => {
+    const fetchData = async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations`,
       );
+
       const json = await res.json();
+      const data = json.data;
       setOperations(json.data);
-    };
+      const documentStyle = getComputedStyle(document.documentElement);
+      const textColor = documentStyle.getPropertyValue("--text-color");
+      const textColorSecondary = documentStyle.getPropertyValue(
+        "--text-color-secondary",
+      );
+      const surfaceBorder = documentStyle.getPropertyValue("--surface-border");
 
-    getData();
-  }, []);
+      const labels = data.map((d: Operation) =>
+        new Date(d.work_date).toLocaleDateString("th-TH", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+      );
 
-  const toDate = (date: string | Date | null) => {
-    if (!date) return null;
-    return new Date(date);
-  };
+      setChartData({
+        labels,
+        datasets: [
+          {
+            type: "line",
+            label: "SV30",
+            data: data.map((d: Operation) => d.sv30_value),
+            backgroundColor: "#22C55E",
+          },
+        ],
+      });
 
-  const getWeekKey = (date: string | Date | null) => {
-    const d = toDate(date);
-    if (!d) return null;
-
-    const start = new Date(d.getFullYear(), 0, 1);
-    const diff = (d.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-    const week = Math.ceil((diff + start.getDay() + 1) / 7);
-
-    return `${d.getFullYear()}-W${week}`;
-  };
-  const currentWeek = getWeekKey(new Date());
-
-  const summary = useMemo(() => {
-    const todayData = operations.filter((op) => {
-      return getWeekKey(op.work_date) === currentWeek;
-    });
-
-    return {
-      totalDO: todayData.reduce((s, i) => s + (i.do_value || 0), 0),
-      totalSV30: todayData.reduce((s, i) => s + (i.sv30_value || 0), 0),
-      totalPH: todayData.reduce((s, i) => s + (i.ph_value || 0), 0),
-    };
-  }, [operations]);
-
-  const chartData = useMemo(() => {
-    return {
-      labels: ["DO", "SV30", "pH"],
-      datasets: [
-        {
-          data: [summary.totalDO, summary.totalSV30, summary.totalPH],
-          backgroundColor: ["#42A5F5", "#66BB6A", "#FFA726"],
+      setChartOptions({
+        maintainAspectRatio: false,
+        aspectRatio: 0.6,
+        plugins: {
+          legend: {
+            labels: {
+              color: textColor,
+            },
+          },
         },
-      ],
-    };
-  }, [summary]);
-
-  const chartOptions = useMemo(() => {
-    return {
-      plugins: {
-        legend: {
-          position: "bottom",
+        scales: {
+          x: {
+            ticks: {
+              color: textColorSecondary,
+            },
+            grid: {
+              color: surfaceBorder,
+            },
+          },
+          y: {
+            ticks: {
+              color: textColorSecondary,
+            },
+            grid: {
+              color: surfaceBorder,
+            },
+          },
         },
-      },
+      });
     };
+
+    fetchData();
   }, []);
 
   return (
-    <div className="w-full flex justify-center">
-      <Chart
-        type="pie"
-        data={chartData}
-        options={chartOptions}
-        className="w-full md:w-30rem"
-      />
+    <div className="card">
+      <Chart type="bar" data={chartData} options={chartOptions} />
     </div>
   );
 }

@@ -71,7 +71,7 @@ export default function WaterReportFrom() {
           gap: "12px",
         }}
       >
-        <h1 className="text-4xl font-bold">รายการระบบน้ำเสียรายวัน</h1>
+        <h1 className="text-4xl font-bold">รายงานระบบน้ำเสียรายวัน</h1>
 
         <div style={{ display: "flex", gap: "8px" }}>
           <Button
