@@ -540,7 +540,7 @@ export default function Page() {
         />
         <Button
           label="บันทึก"
-          icon="pi pi-check"
+          icon="pi pi-save"
           severity="success"
           onClick={handleSubmit}
         />

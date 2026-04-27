@@ -2,36 +2,46 @@
 import React from "react";
 import { Menubar } from "primereact/menubar";
 import { MenuItem } from "primereact/menuitem";
-import { Badge } from "primereact/badge";
+import { MenuItemOptions } from "primereact/menuitem";
 import { Avatar } from "primereact/avatar";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
-  const itemRenderer = (item: MenuItem) => (
-    <a className="flex align-items-center p-menuitem-link">
-      <span className={item.icon} />
-      <span className="mx-2">{item.label}</span>
-      {item.badge && <Badge className="ml-auto" value={item.badge} />}
-      {item.shortcut && (
-        <span className="ml-auto border-1 surface-border border-round surface-100 text-xs p-1">
-          {item.shortcut}
-        </span>
-      )}
-    </a>
-  );
+
+  const itemRenderer = (item: MenuItem, options: MenuItemOptions) => {
+    return (
+      <a
+        onClick={() => item.url && router.push(item.url)}
+        className={[
+          "flex items-center gap-2 text-lg font-medium px-2 py-1 rounded cursor-pointer",
+          options.className,
+        ].join(" ")}
+      >
+        <i className={item.icon}></i>
+        <span>{item.label}</span>
+      </a>
+    );
+  };
+
   const items: MenuItem[] = [
     {
-      label: "รายงานระบบน้ำเสีย",
+      label: "หน้าเเรก",
       icon: "pi pi-home",
+      url: "/",
+      template: itemRenderer,
+    },
+    {
+      label: "รายงานระบบน้ำเสีย",
+      icon: "pi pi-list",
       url: "/water-reports",
-      //template: itemRenderer,
+      template: itemRenderer,
     },
     {
       label: "คู่มือการใช้งาน",
       icon: "pi pi-book",
       url: "/user-manual",
-      //template: itemRenderer,
+      template: itemRenderer,
     },
   ];
 

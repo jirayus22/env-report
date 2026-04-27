@@ -466,6 +466,7 @@ export default function Page() {
           <InputText
             className="w-full"
             placeholder="DO"
+            type="number"
             value={metrics.do_value}
             onChange={(e) =>
               setMetrics((prev) => ({
@@ -481,6 +482,7 @@ export default function Page() {
           <InputText
             className="w-full"
             placeholder="SV30"
+            type="number"
             value={metrics.sv30_value}
             onChange={(e) =>
               setMetrics((prev) => ({
@@ -496,6 +498,7 @@ export default function Page() {
           <InputText
             className="w-full"
             placeholder="PH"
+            type="number"
             value={metrics.ph_value}
             onChange={(e) =>
               setMetrics((prev) => ({
@@ -555,7 +558,7 @@ export default function Page() {
         />
         <Button
           label="บันทึก"
-          icon="pi pi-check"
+          icon="pi pi-save"
           severity="success"
           onClick={handleSubmit}
         />

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -17,13 +17,12 @@ export default function WaterReportFrom() {
   };
 
   useEffect(() => {
-    console.log("Fetching operations... : " + process.env.NEXT_PUBLIC_API_URL);
     const getData = async () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/operations`,
       );
+
       const json = await res.json();
-      console.log("Fetched operations:", json.data);
       setOperations(json.data);
     };
 
@@ -70,12 +69,23 @@ export default function WaterReportFrom() {
         }}
       >
         <h1 className="text-4xl font-bold">รายการระบบน้ำเสียรายวัน</h1>
-        <Button
-          label="เพิ่มรายการ"
-          icon="pi pi-plus"
-          severity="success"
-          onClick={() => router.push("/water-reports/create")}
-        />
+
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            icon="pi pi-refresh"
+            severity="info"
+            tooltip="รีเฟรชข้อมูล"
+            tooltipOptions={{ position: "top" }}
+          />
+          <Button
+            label="เพิ่มรายการ"
+            icon="pi pi-plus"
+            severity="success"
+            tooltip="เพิ่มรายการ"
+            tooltipOptions={{ position: "top" }}
+            onClick={() => router.push("/water-reports/create")}
+          />
+        </div>
       </div>
 
       <div className="pt-5">
@@ -160,8 +170,8 @@ export default function WaterReportFrom() {
             filterPlaceholder="Search by name"
             style={{ minWidth: "5rem" }}
             body={(row) => (
-              <span style={{ color: getColor("sv30", row.do_value) }}>
-                {row.do_value}
+              <span style={{ color: getColor("sv30", row.sv30_value) }}>
+                {row.sv30_value}
               </span>
             )}
           />
@@ -172,8 +182,8 @@ export default function WaterReportFrom() {
             filterPlaceholder="Search by name"
             style={{ minWidth: "5rem" }}
             body={(row) => (
-              <span style={{ color: getColor("ph", row.do_value) }}>
-                {row.do_value}
+              <span style={{ color: getColor("ph", row.ph_value) }}>
+                {row.ph_value}
               </span>
             )}
           />
@@ -191,6 +201,8 @@ export default function WaterReportFrom() {
             body={(rowData: Operation) => (
               <Button
                 icon="pi pi-search"
+                tooltip="ดูลายละเอียด"
+                tooltipOptions={{ position: "top" }}
                 rounded
                 text
                 style={{ fontSize: "5rem" }} // 🔥 ขยายไอคอน
