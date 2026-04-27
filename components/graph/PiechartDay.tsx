@@ -17,7 +17,10 @@ export default function ComboChart() {
       );
 
       const json = await res.json();
-      const data = json.data;
+      const data = json.data.sort(
+        (a: Operation, b: Operation) =>
+          new Date(a.work_date).getTime() - new Date(b.work_date).getTime(),
+      );
       setOperations(json.data);
       const documentStyle = getComputedStyle(document.documentElement);
       const textColor = documentStyle.getPropertyValue("--text-color");
