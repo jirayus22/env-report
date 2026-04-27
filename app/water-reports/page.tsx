@@ -42,6 +42,24 @@ export default function WaterReportFrom() {
     });
   };
 
+  const getColor = (field: string, value: number) => {
+    const v = Number(value);
+
+    switch (field) {
+      case "do":
+        return v > 1 ? "#FF3B30" : "#333333";
+
+      case "sv30":
+        return v < 200 || v > 500 ? "#FF3B30" : "#333333";
+
+      case "ph":
+        return v < 5 || v > 8 ? "#FF3B30" : "#333333";
+
+      default:
+        return "#333333";
+    }
+  };
+
   return (
     <div>
       <div
@@ -129,6 +147,11 @@ export default function WaterReportFrom() {
             sortable
             filterPlaceholder="Search by name"
             style={{ minWidth: "3rem" }}
+            body={(row) => (
+              <span style={{ color: getColor("do", row.do_value) }}>
+                {row.do_value}
+              </span>
+            )}
           />
           <Column
             field="sv30_value"
@@ -136,6 +159,11 @@ export default function WaterReportFrom() {
             sortable
             filterPlaceholder="Search by name"
             style={{ minWidth: "5rem" }}
+            body={(row) => (
+              <span style={{ color: getColor("sv30", row.do_value) }}>
+                {row.do_value}
+              </span>
+            )}
           />
           <Column
             field="ph_value"
@@ -143,6 +171,11 @@ export default function WaterReportFrom() {
             sortable
             filterPlaceholder="Search by name"
             style={{ minWidth: "5rem" }}
+            body={(row) => (
+              <span style={{ color: getColor("ph", row.do_value) }}>
+                {row.do_value}
+              </span>
+            )}
           />
           <Column
             field="createdAt"

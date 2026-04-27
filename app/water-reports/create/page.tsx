@@ -252,8 +252,65 @@ export default function Page() {
       "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined",
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const errors: string[] = [];
+
+    // 1. validate form (radio group)
+    fieldRadios.forEach((field) => {
+      if (form[field.key] === undefined || form[field.key] === null) {
+        errors.push(`${field.label}`);
+      }
+    });
+
+    // 2. validate date
+    if (!date) {
+      errors.push("วันที่");
+    }
+
+    // 3. validate metrics
+    if (
+      metrics.ph_value === undefined ||
+      metrics.ph_value === null ||
+      metrics.ph_value === ""
+    ) {
+      errors.push("กรอก pH");
+    }
+
+    if (
+      metrics.sv30_value === undefined ||
+      metrics.sv30_value === null ||
+      metrics.sv30_value === ""
+    ) {
+      errors.push("กรอก SV30");
+    }
+
+    // 4. validate userInspector
+    if (!userInspector || Object.keys(userInspector).length === 0) {
+      errors.push("ผู้ตรวจสอบ");
+    }
+
+    // ❌ ถ้ามี error ให้หยุด
+    if (errors.length > 0) {
+      console.log("❌ Validation failed:", errors);
+      Swal.fire({
+        title: "แจ้งเตือน!",
+        text: "กรุณาเลือก " + errors.join(" , "),
+        icon: "warning",
+        confirmButtonText: "ตกลง",
+        confirmButtonColor: "#22c55e",
+      });
+      return;
+    }
+
+    // ✅ ผ่านทั้งหมด
+    console.log("submit", form);
+    console.log("validate date : " + date);
+    console.log("ph_value : " + metrics.ph_value);
+    console.log("sv30_value : " + metrics.sv30_value);
     console.log("UserInspector : " + JSON.stringify(userInspector));
+
     const payload = {
       ...form,
       project_id: "69e8f9d2335b5983d11f74f5",
